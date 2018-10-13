@@ -35,28 +35,49 @@
         <item>
          <widget class="QPushButton" name="pushButton1">
           <property name="text">
-           <string>Preset 1</string>
+           <string>Stall</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButton2">
           <property name="text">
-           <string>Preset 2</string>
+           <string>Stübchen</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButton3">
           <property name="text">
-           <string>Preset 3</string>
+           <string>Waschplatz</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="pushButton4">
           <property name="text">
-           <string>Preset 4</string>
+           <string>Tor</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonReithalle">
+          <property name="text">
+           <string>Reithalle</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonParken1">
+          <property name="text">
+           <string>Parken 1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonParken2">
+          <property name="text">
+           <string>Parken 2</string>
           </property>
          </widget>
         </item>
@@ -74,7 +95,14 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="pushButtonTest">
+          <property name="text">
+           <string>Event</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButtonRecord">
           <property name="text">
            <string>Record</string>
           </property>
@@ -83,7 +111,7 @@
         <item>
          <widget class="QPushButton" name="pushButtonSnapshot">
           <property name="text">
-           <string>Snapshot</string>
+           <string>Picture</string>
           </property>
          </widget>
         </item>
