@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QRectF, QThread, Qt
 from collections import deque
-from ui_mainwindow2 import Ui_MainWindow
+from ui_mainwindow3 import Ui_MainWindow
 sys.path.append("D:/data/Python/")          # needed to import 'pythonOnvifDomecam' if not in the same directory
 from pythonOnvifDomecam import MegapixelDomeCamera as cam, config
 
