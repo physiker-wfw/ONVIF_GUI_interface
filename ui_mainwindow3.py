@@ -27,7 +27,7 @@ class Ui_MainWindow(object):
         self.labelFrame = QtWidgets.QLabel(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(2)
-        sizePolicy.setVerticalStretch(2)
+        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.labelFrame.sizePolicy().hasHeightForWidth())
         self.labelFrame.setSizePolicy(sizePolicy)
         self.labelFrame.setText("")

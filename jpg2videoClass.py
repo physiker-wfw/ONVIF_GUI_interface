@@ -6,7 +6,7 @@ from datetime import timedelta
 
 
 class jpg2video:
-    inputPath = "\\\\nas\\Camera\\"
+    inputPath = "\\\\nas\\Camera\\snapshots\\"
     def __init__(self,datapath=inputPath):
         self.datapath = datapath
         self.outputPath = "\\\\nas\\VideoIPcam\\"
@@ -32,6 +32,22 @@ class jpg2video:
                 if counter > maxFrame:
                     break
         return myFiles, counter
+
+    def getFileNumber(self, fileList, selectDate):
+        counter = 0
+        node, date, time,_ ,_,=re.split('\_',fileList[-1])
+        lastDate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
+        if selectDate > lastDate:
+            return len(fileList)-1
+        for filename in fileList:
+            node, date, time,_ ,_,=re.split('\_',filename)
+            fdate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
+            if selectDate > fdate:
+                counter += 1
+            else:
+                break
+        return counter
+
 
     def getFirstDate(self,filelist):
         node, date, time,_ ,_,=re.split('\_',filelist[0])
@@ -85,7 +101,6 @@ class jpg2video:
 
 
 if __name__ == '__main__':
-    datapath = "D:\\Data\\Python\\readHREELS\\"
     print('This programm will convert the jpg files in \\nas\Camera\ to a mp4 video:')
     s1,s2 = input('Start time and duration (%Y-%m-%d_%H:%M number_of_hours):').split(' ')
     start_date = datetime.strptime(s1, "%Y-%m-%d_%H:%M")
