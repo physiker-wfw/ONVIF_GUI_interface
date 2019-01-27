@@ -13,15 +13,19 @@ from ui_snapshot import Ui_MainWindow
 class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is important for pyqtSignal
     def myModifications(self):
         self.pushButton_previous.clicked.connect(self.onPrevious)
-        self.pushButton_next.clicked.connect(self.onNext)
+        self.pushButton_next.pressed.connect(self.onNext)
         self.pushButton_minus.clicked.connect(self.onMinus)
         self.pushButton_plus.clicked.connect(self.onPlus)
         self.pushButton_Video.clicked.connect(self.onVideo)
         self.dateTimeEdit.setDateTime(QDateTime.currentDateTime()) 
         self.dateTimeEdit.dateTimeChanged.connect(self.ondateTimeEdit)
-        self.num = 0
+        self.pushButton.setText("Exit")
+        self.picFactor = 1
+        self.Bild.mouseReleaseEvent = self.togglePicSize
         self.numMax = len(allFiles)
+        self.num = self.numMax - 1
         print("Number of files:", self.numMax)
+        self.showPic(self.num)
 
     def onPrevious(self):
         self.num -= 1
@@ -59,22 +63,38 @@ class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is importa
         fname = allFiles[self.num]
         node, date, time,_ ,_,=re.split('\_',fname)
         fdate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
-        print(date+" "+time)        # 2019-01-03 00-03-14
-        print(QDateTime.fromString(date+" "+time, "yyyy-MM-dd HH-mm-ss").toString())
-        self.pixMap = QPixmap(vi.datapath+fname)
+        # print(date+" "+time)        # 2019-01-03 00-03-14
+        # print(QDateTime.fromString(date+" "+time, "yyyy-MM-dd HH-mm-ss").toString())
+        pic = QPixmap(vi.datapath+fname)
+        self.pixMap = pic.scaled(pic.width()*self.picFactor,pic.height()*self.picFactor)
         self.Bild.setPixmap(self.pixMap)
-        # self.Bild.resize(self.pixMap.width(),self.pixMap.height())
         self.dateTimeEdit.setDateTime(QDateTime.fromString(date+" "+time, "yyyy-MM-dd HH-mm-ss"))
 
     def onVideo(self):
-        pass
+        self.SW = SecondWindow() 
+        self.SW.resize(609, 519)
+        self.SW.setWindowTitle('Please close me!')
+        self.SW.show()
 
+
+    def togglePicSize(self, event):
+        if self.picFactor != 1:
+            self.picFactor = 1
+        else:
+            self.picFactor =2
+        self.showPic(self.num)
+    
+class SecondWindow(QtWidgets.QMainWindow): 
+    def __init__(self): 
+        super(SecondWindow, self).__init__() 
+        lbl = QtWidgets.QLabel('Second window') 
 
 class snapshot(jpg2video):
     pass
 
 #############################################################################################
 if __name__ == '__main__':
+    # vi = snapshot()
     vi = snapshot(datapath="D:\\Data\\Python\\DomeCam_GUI\\testdata\\")
     date = datetime.now()
 

@@ -26,6 +26,9 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.dateTimeEdit.sizePolicy().hasHeightForWidth())
         self.dateTimeEdit.setSizePolicy(sizePolicy)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.dateTimeEdit.setFont(font)
         self.dateTimeEdit.setObjectName("dateTimeEdit")
         self.horizontalLayout.addWidget(self.dateTimeEdit)
         self.pushButton_previous = QtWidgets.QPushButton(self.centralwidget)
@@ -55,6 +58,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         spacerItem1 = QtWidgets.QSpacerItem(408, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
+        self.pushButton = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton.setObjectName("pushButton")
+        self.horizontalLayout_2.addWidget(self.pushButton)
         self.pushButton_Video = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_Video.setObjectName("pushButton_Video")
         self.horizontalLayout_2.addWidget(self.pushButton_Video)
@@ -84,6 +90,7 @@ class Ui_MainWindow(object):
         self.pushButton_minus.setText(_translate("MainWindow", "-8"))
         self.pushButton_plus.setText(_translate("MainWindow", "+8"))
         self.Bild.setText(_translate("MainWindow", "TextLabel"))
+        self.pushButton.setText(_translate("MainWindow", "Test"))
         self.pushButton_Video.setText(_translate("MainWindow", "Make Video"))
 
 
