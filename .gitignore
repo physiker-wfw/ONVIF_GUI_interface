@@ -4,3 +4,6 @@ __pycache__/
 *.avi
 *.spec
 .vscode/
+vid_20190103_130557.mp4
+dummy.py
+testPixmapLoad.py
