@@ -1,29 +1,31 @@
+#!/usr/bin/env python3
 import sys
 import time
 import urllib.request
 import cv2
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMessageBox, QFileDialog, QGraphicsScene
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QRectF, QThread, Qt
+from PyQt5 import QtWidgets, QtCore, QtGui, uic
+# # from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMessageBox, QFileDialog, QGraphicsScene
+# from PyQt5.QtGui import QtGui.QPixmap, QtGui.QImage
+# from PyQt5 import QtCore, QtWidgets
+# from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QRectF, QThread, Qt
 from collections import deque
-from ui_mainwindow3 import Ui_MainWindow
 sys.path.append("D:/data/Python/")          # needed to import 'pythonOnvifDomecam' if not in the same directory
 from pythonOnvifDomecam import MegapixelDomeCamera as cam, config
 
-class Thread(QThread):
-    ''' Thread(xui): Thread to capture the individual frames which are then passed as QImage to the interrupt routine. 
-    If record flag (ui.record) is True, video will be recorded to file ui.out''' 
+class Thread(QtCore.QThread):
+    ''' Thread(QtCore.QThread): Thread to capture the individual frames which are then passed as QtGui.QImage to the interrupt routine. 
+    If record flag (self.record) is True, video will be recorded to file self.out''' 
     def __init__(self):
         super().__init__()
-        # ui = callingClass      # class that sets the recording flag and defines the output file
         # self.cap = cv2.VideoCapture(0)                    # To read built-in web cam
         self.cap = cv2.VideoCapture('rtsp://'+config.host+':'+str(config.rtsp_port)+config.rtsp_url)   # To read stream of IP camera
         fac = 0.5      # reduce image resolution for video file
         self.size = (int(self.cap.get(3)*fac), int(self.cap.get(4)*fac))
+
+        # store the last maxlen frames in self.que
         self.que = deque(maxlen=100)
 
-    changePixmap = pyqtSignal(QImage)
+    changePixmap = QtCore.pyqtSignal(QtGui.QImage)
 
     def run(self):
         while (self.cap.isOpened()):
@@ -31,41 +33,56 @@ class Thread(QThread):
             if ret:
                 resized = cv2.resize(frame, self.size, interpolation = cv2.INTER_AREA)
                 self.que.append(resized)
-                # rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 rgbImage = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
                 if ui.record:
                     # write the video frame to file
                     ui.out.write(resized)
-                myImage = QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QImage.Format_RGB888)
-                myImage = myImage.scaled(640*2, 480*2, Qt.KeepAspectRatio)
+                myImage = QtGui.QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QtGui.QImage.Format_RGB888)
+                myImage = myImage.scaled(640*2, 480*2, QtCore.Qt.KeepAspectRatio)
                 self.changePixmap.emit(myImage)
                 ui.countDown -= 1
                 if ui.countDown == 0:
                     ui.writeVideoBuffer()
 
-class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is important for pyqtSignal
-    timer = QTimer()
+class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
+    """ fill in some initial data """
 
-    def myModifications(self):
+    timer = QtCore.QTimer()
+    def __init__(self):
+        super(xxWindow, self).__init__()
+        self.ui = self.ui = uic.loadUi("GUI_DomeCamera3.ui", self)
+
+        # label and specify buttons
         self.pushButton1.clicked.connect(self.onPushButton1)
         self.pushButton2.clicked.connect(self.onPushButton2)
         self.pushButton3.clicked.connect(self.onPushButton3)
         self.pushButton4.clicked.connect(self.onPushButton4)
-        self.pushButtonReithalle.clicked.connect(self.onPushButtonReithalle)
-        self.pushButtonParken1.clicked.connect(self.onPushButtonParken1)
-        self.pushButtonParken2.clicked.connect(self.onPushButtonParken2)
-        self.pushButtonTest.clicked.connect(self.onTest)
-        self.pushButtonRecord.clicked.connect(self.onRecord)
-        self.pushButtonSnapshot.clicked.connect(self.onPushButtonSnapshot)
+        self.pushButton5.clicked.connect(self.onPushButtonReithalle)
+        self.pushButton6.clicked.connect(self.onPushButtonParken1)
+        self.pushButton7.clicked.connect(self.onPushButtonParken2)
+        self.pushButtonU4.clicked.connect(self.onU4)
+        self.pushButtonU3.clicked.connect(self.onTest)
+        self.pushButtonU3.setText('Test')
+        self.pushButtonU2.clicked.connect(self.onRecord)
+        self.pushButtonU3.setText('Record')
+        self.pushButtonU1.clicked.connect(self.onPushButtonSnapshot)
+        self.pushButtonU3.setText('XXX')
         self.actionSave_as.triggered.connect(self.onActionFilename)
         self.actionAbout.triggered.connect(self.onActionAbout)
+        self.tiltSlider.setRange(-20,20)
+        self.tiltSlider.valueChanged.connect(self.onSliderValueChanged) 
+        self.tiltSlider.sliderReleased.connect(self.onSliderReleased) 
+        
+        
         # self.actionHelp.triggered.connect(self.onActionCommands)
+
+
         self.record = False
         self.countDown = -1      # If countDown is zero, the video buffer is written to file.
+        self.snapshot = QtGui.QPixmap()
         self.th = Thread()
-        self.th.changePixmap.connect(self.setImage)      # Defining interrupt routine for QImage data
+        self.th.changePixmap.connect(self.setImage)      # Defining interrupt routine for QtGui.QImage data
         self.th.start()
-
 
     def onPushButton1(self):
         self.camera.moveToPositionPreset(1)
@@ -96,12 +113,15 @@ class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is importa
         opener.open(self.camera.getSnapshot())
         urllib.request.install_opener(opener)
         data = urllib.request.urlopen(self.camera.getSnapshot()).read()
-        self.snapshot = QPixmap()
         self.snapshot.loadFromData(data)
         self.onActionFilename()
 
+    def onU4(self):
+        self.camera.relativeMove(pan=1, duration=1.0)
+
+
     def onActionFilename(self):    
-        options = QFileDialog.Options()
+        options = QtWidgets.QFileDialog.Options()
         #options |= QFileDialog.DontUseNativeDialog
         # jpgFile, _ = QFileDialog.getSaveFileName(self,"Select file:" , "D:\\Daten\\*.jpg", options=options)
         jpgFile = 'pic_'+time.strftime("%Y%m%d_%H%M%S")+'.jpg'
@@ -110,15 +130,15 @@ class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is importa
     
     def onActionAbout(self):
         print("About ...")
-        QMessageBox.about(self, "About",
+        QtWidgets.QMessageBox.about(self, "About",
         """Testing routines to control an IP camera.
         (@MLU-WFW)""")
 
-    @pyqtSlot(QImage)
+    @QtCore.pyqtSlot(QtGui.QImage)
     def setImage(self, image):
-        '''Plots the QImage argument on the label 'labelFrame'. 
-        Interrupt routine to accept QImage data and to push them to a label.'''
-        self.pixMap = QPixmap.fromImage(image)
+        '''Plots the QtGui.QImage argument on the label 'labelFrame'. 
+        Interrupt routine to accept QtGui.QImage data and to push them to a label.'''
+        self.pixMap = QtGui.QPixmap.fromImage(image)
         self.labelFrame.setPixmap(self.pixMap)
 
     def setupCam(self):
@@ -127,12 +147,12 @@ class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is importa
     def onRecord(self):
         if not self.record:
             self.saveVideoStart()
-            self.pushButtonRecord.setStyleSheet("background-color:yellow;")
-            self.pushButtonRecord.setText("Stop")
+            self.pushButtonU2.setStyleSheet("background-color:yellow;")
+            self.pushButtonU2.setText("Stop")
         else:
             self.saveVideoStopp()
-            self.pushButtonRecord.setText("Record")
-            self.pushButtonRecord.setStyleSheet("background-color:white;")
+            self.pushButtonU2.setText("Record")
+            self.pushButtonU2.setStyleSheet("background-color:white;")
 
     def saveVideoStart(self):           
         # Define the codec and create VideoWriter object
@@ -156,13 +176,19 @@ class MyWindow(Ui_MainWindow,QWidget):      # Inheritage from QWidget is importa
             outSnap.write(self.th.que.popleft())
         outSnap.release()
 
+    def onSliderValueChanged(self):
+        print('Slider value:',self.tiltSlider.value())
+
+    def onSliderReleased(self):
+        print('Slider released:',self.tiltSlider.value())
+        self.tiltSlider.setValue(0)
+
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = MyWindow()
-    ui.setupUi(MainWindow)
+    ui = xxWindow()
+    # ui.setupUi(MainWindow)
     ui.setupCam()
-    ui.myModifications()
-    MainWindow.show()
+    ui.show()
     sys.exit(app.exec_())

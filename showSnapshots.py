@@ -94,8 +94,8 @@ class snapshot(jpg2video):
 
 #############################################################################################
 if __name__ == '__main__':
-    # vi = snapshot()
-    vi = snapshot(datapath="D:\\Data\\Python\\DomeCam_GUI\\testdata\\")
+    vi = snapshot()
+    # vi = snapshot(datapath="D:\\Data\\Python\\DomeCam_GUI\\testdata\\")
     date = datetime.now()
 
     allFiles, n = vi.getFileList()
