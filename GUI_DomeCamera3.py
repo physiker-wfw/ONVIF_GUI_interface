@@ -34,9 +34,9 @@ class Thread(QtCore.QThread):
                 resized = cv2.resize(frame, self.size, interpolation = cv2.INTER_AREA)
                 self.que.append(resized)
                 rgbImage = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-                if ui.record:
+                if self.record:
                     # write the video frame to file
-                    ui.out.write(resized)
+                    self.out.write(resized)
                 myImage = QtGui.QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QtGui.QImage.Format_RGB888)
                 myImage = myImage.scaled(640*2, 480*2, QtCore.Qt.KeepAspectRatio)
                 self.changePixmap.emit(myImage)
@@ -51,6 +51,7 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
     def __init__(self):
         super(xxWindow, self).__init__()
         self.ui = self.ui = uic.loadUi("GUI_DomeCamera3.ui", self)
+        self.setupCam()
 
         # label and specify buttons
         self.pushButton1.clicked.connect(self.onPushButton1)
@@ -77,10 +78,10 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         # self.actionHelp.triggered.connect(self.onActionCommands)
 
 
-        self.record = False
         self.countDown = -1      # If countDown is zero, the video buffer is written to file.
         self.snapshot = QtGui.QPixmap()
         self.th = Thread()
+        self.th.record = False
         self.th.changePixmap.connect(self.setImage)      # Defining interrupt routine for QtGui.QImage data
         self.th.start()
 
@@ -145,7 +146,7 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         self.camera = cam.MegapixelDomeCamera(config.host, config.port, config.user, config.password)
 
     def onRecord(self):
-        if not self.record:
+        if not self.th.record:
             self.saveVideoStart()
             self.pushButtonU2.setStyleSheet("background-color:yellow;")
             self.pushButtonU2.setText("Stop")
@@ -158,12 +159,12 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         # Define the codec and create VideoWriter object
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         file = 'vid_'+time.strftime("%Y%m%d_%H%M%S")+'.avi'
-        self.out = cv2.VideoWriter(file,fourcc, 25.0, self.th.size)
-        self.record = True
+        self.th.out = cv2.VideoWriter(file,fourcc, 25.0, self.th.size)
+        self.th.record = True
 
     def saveVideoStopp(self):         
-        self.record = False
-        self.out.release()
+        self.th.record = False
+        self.th.out.release()
 
     def onTest(self):
         self.countDown = 50      # Count the next 50 frames. Afterwards the video buffer is written to file.
@@ -183,12 +184,9 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         print('Slider released:',self.tiltSlider.value())
         self.tiltSlider.setValue(0)
 
-
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     ui = xxWindow()
-    # ui.setupUi(MainWindow)
-    ui.setupCam()
     ui.show()
     sys.exit(app.exec_())
