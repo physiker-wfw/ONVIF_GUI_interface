@@ -19,7 +19,7 @@ class jpg2video:
         return jpgFiles, len(jpgFiles)
 
     def filterDate(self, filelist, startdate, enddate=datetime.now()):
-        maxFrame = 4096*8
+        maxFrame = 4096*40
         counter = 0
         myFiles = []
         for filename in filelist:
@@ -30,6 +30,7 @@ class jpg2video:
                 myFiles.append(filename)
                 counter += 1
                 if counter > maxFrame:
+                    print("MAXIMUM NUMBER OF FRAMES DETECTED!!")
                     break
         return myFiles, counter
 
