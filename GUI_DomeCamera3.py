@@ -4,10 +4,6 @@ import time
 import urllib.request
 import cv2
 from PyQt5 import QtWidgets, QtCore, QtGui, uic
-# # from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMessageBox, QFileDialog, QGraphicsScene
-# from PyQt5.QtGui import QtGui.QPixmap, QtGui.QImage
-# from PyQt5 import QtCore, QtWidgets
-# from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QRectF, QThread, Qt
 from collections import deque
 sys.path.append("D:/data/Python/")          # needed to import 'pythonOnvifDomecam' if not in the same directory
 from pythonOnvifDomecam import MegapixelDomeCamera as cam, config
@@ -40,20 +36,29 @@ class Thread(QtCore.QThread):
                 myImage = QtGui.QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QtGui.QImage.Format_RGB888)
                 myImage = myImage.scaled(640*2, 480*2, QtCore.Qt.KeepAspectRatio)
                 self.changePixmap.emit(myImage)
-                ui.countDown -= 1
-                if ui.countDown == 0:
-                    ui.writeVideoBuffer()
+                self.countDown -= 1
+                if self.countDown == 0:
+                    self.writeVideoBuffer()
+
+    def writeVideoBuffer(self):
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        file = 'snap_'+time.strftime("%Y%m%d_%H%M%S")+'.avi'
+        outSnap = cv2.VideoWriter(file,fourcc, 25.0, self.size)
+        for i in range(min(100,len(self.que))):
+            outSnap.write(self.que.popleft())
+        outSnap.release()
 
 class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
     """ fill in some initial data """
-
     timer = QtCore.QTimer()
     def __init__(self):
         super(xxWindow, self).__init__()
         self.ui = self.ui = uic.loadUi("GUI_DomeCamera3.ui", self)
-        self.setupCam()
 
-        # label and specify buttons
+        # Setup the DomeCamera
+        self.camera = cam.MegapixelDomeCamera(config.host, config.port, config.user, config.password)
+
+        # label and specify buttons with their actions
         self.pushButton1.clicked.connect(self.onPushButton1)
         self.pushButton2.clicked.connect(self.onPushButton2)
         self.pushButton3.clicked.connect(self.onPushButton3)
@@ -72,18 +77,23 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         self.actionAbout.triggered.connect(self.onActionAbout)
         self.tiltSlider.setRange(-20,20)
         self.tiltSlider.valueChanged.connect(self.onSliderValueChanged) 
-        self.tiltSlider.sliderReleased.connect(self.onSliderReleased) 
+        self.tiltSlider.sliderReleased.connect(self.onSliderReleased)       
         
-        
-        # self.actionHelp.triggered.connect(self.onActionCommands)
+        self.actionHelp.triggered.connect(self.onActionHelp)
 
-
-        self.countDown = -1      # If countDown is zero, the video buffer is written to file.
         self.snapshot = QtGui.QPixmap()
+
+        # Handling of video routine with the thread
         self.th = Thread()
         self.th.record = False
+        self.th.countDown = -1      # If countDown is zero, the video buffer is written to file.
         self.th.changePixmap.connect(self.setImage)      # Defining interrupt routine for QtGui.QImage data
         self.th.start()
+
+        # Mouse event over video
+        self.labelFrame.mousePressEvent = self.onMousePressed
+        self.labelFrame.mouseReleaseEvent = self.onMouseReleased
+
 
     def onPushButton1(self):
         self.camera.moveToPositionPreset(1)
@@ -120,7 +130,6 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
     def onU4(self):
         self.camera.relativeMove(pan=1, duration=1.0)
 
-
     def onActionFilename(self):    
         options = QtWidgets.QFileDialog.Options()
         #options |= QFileDialog.DontUseNativeDialog
@@ -132,6 +141,12 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
     def onActionAbout(self):
         print("About ...")
         QtWidgets.QMessageBox.about(self, "About",
+        """This is the help file. \n
+        (@MLU-WFW)""")
+
+    def onActionHelp(self):
+        print("Help ...")
+        QtWidgets.QMessageBox.about(self, "Help",
         """Testing routines to control an IP camera.
         (@MLU-WFW)""")
 
@@ -142,8 +157,24 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         self.pixMap = QtGui.QPixmap.fromImage(image)
         self.labelFrame.setPixmap(self.pixMap)
 
-    def setupCam(self):
-        self.camera = cam.MegapixelDomeCamera(config.host, config.port, config.user, config.password)
+    def onMousePressed(self, event):
+        self.mousePressed = [event.pos().x(),event.pos().y()]
+
+    def onMouseReleased(self, event):
+        x = event.pos().x()
+        y = event.pos().y()
+        self.mouseReleased = [x,y]
+        vector = [x-self.mousePressed[0], y-self.mousePressed[1]]
+        if vector[0]<0:
+            pan = cam.Pan.RIGHT
+        else:
+            pan = cam.Pan.LEFT
+        if vector[1]>0:
+            tilt = cam.Tilt.UP
+        else:
+            tilt = cam.Tilt.DOWN
+        self.camera.relativeMove(pan=pan, duration=abs(vector[0])/160.)
+        self.camera.relativeMove(tilt=tilt, duration=abs(vector[1])/160.)
 
     def onRecord(self):
         if not self.th.record:
@@ -167,22 +198,20 @@ class xxWindow(QtWidgets.QMainWindow, QtWidgets.QWidget):
         self.th.out.release()
 
     def onTest(self):
-        self.countDown = 50      # Count the next 50 frames. Afterwards the video buffer is written to file.
+        self.th.countDown = 50      # Count the next 50 frames. Afterwards the video buffer is written to file.
     
-    def writeVideoBuffer(self):
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        file = 'snap_'+time.strftime("%Y%m%d_%H%M%S")+'.avi'
-        outSnap = cv2.VideoWriter(file,fourcc, 25.0, self.th.size)
-        for i in range(min(100,len(self.th.que))):
-            outSnap.write(self.th.que.popleft())
-        outSnap.release()
-
     def onSliderValueChanged(self):
         print('Slider value:',self.tiltSlider.value())
 
     def onSliderReleased(self):
         print('Slider released:',self.tiltSlider.value())
+        if self.tiltSlider.value()>0:
+            zoom = cam.Zoom.IN
+        else:
+            zoom = cam.Zoom.OUT
+        self.camera.relativeMove(zoom=zoom, duration=abs(self.tiltSlider.value())/10.)
         self.tiltSlider.setValue(0)
+
 
 if __name__ == "__main__":
     import sys
