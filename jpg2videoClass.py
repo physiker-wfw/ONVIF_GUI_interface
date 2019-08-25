@@ -10,6 +10,7 @@ class jpg2video:
     def __init__(self,datapath=inputPath):
         self.datapath = datapath
         self.outputPath = "\\\\nas\\VideoIPcam\\"
+        self.outputLocal = "./"
 
     def getFileList(self):
         data_ext = ['jpg', 'JPG','jpeg']
@@ -98,6 +99,47 @@ class jpg2video:
                 print("Error removing: ", self.datapath+filename)
         print(i, 'files removed from', len(fileList), 'in total.\n')
         return
+
+    def files2video2(self, filelist, output=0, codec='mp42'):
+        if not filelist:
+            print("Nothing to convert (empty filelist).")
+            return
+        # Define the codec and create VideoWriter object
+        # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        # fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        fourcc = cv2.VideoWriter_fourcc(*'MP42')
+        fac = 0.75
+        fps = 15.0
+        frame = cv2.imread(self.datapath+filelist[0])
+        height, width, channels = frame.shape
+        # print("height, width, channels",height, width, channels)
+        newSize = (int(width*fac), int(height*fac))
+        # if not output:
+        node, date, time,_ ,_,=re.split('\_',filelist[0])
+        output = self.outputLocal+"vid_"+date+"_"+time+".avi"
+        frameList = self.outputLocal+"vid_"+date+"_"+time+".dat"
+        out = cv2.VideoWriter(output, fourcc, fps, newSize)
+        print("Converting jpg to video:")
+        iFrame =1
+        # open
+        for filename in filelist:
+            try:
+                frame = cv2.imread(self.datapath+filename)
+                resized = cv2.resize(frame, newSize, interpolation = cv2.INTER_AREA)
+                print(filename, end='\r', flush=True)
+                out.write(resized)
+                node, date, time,_ ,_,=re.split('\_',filename)
+                # print(iFrame, date ,' >>>', time,'<<< ')
+                iFrame += 1
+            except:
+                print("\n      ###  Error in reading, resizing or writing:", filename)
+        out.release()
+        print("\nConversion finished.")
+        cv2.destroyAllWindows()
+        print('Video saved in',output, '     with size: %3.1f MB' %(os.path.getsize(output)/(1024*1024.0)))
+        return output
+
 
 
 

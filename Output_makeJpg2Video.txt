@@ -1,0 +1,22 @@
+PS D:\Data\Python\DomeCam_GUI> & "C:/Program Files (x86)/Python37-32/python.exe" d:/Data/Python/DomeCam_GUI/makeJpg2Video.py -s 2019-02-01_00:00 -e 2019-06-30_00:00 -f
+This programm will convert the jpg files in  \\nas\Camera\snapshots\  to mp4 video
+Number of all saved frames: 146632
+First frame: ('2019-03-11', '12-36-03')
+Number of frames to convert: 146632
+Converting jpg to video:
+Corrupt JPEG data: premature end of data segment
+Corrupt JPEG data: 13 extraneous bytes before marker 0xd9
+Corrupt JPEG data: premature end of data segment
+Corrupt JPEG data: 1551 extraneous bytes before marker 0xd9
+192.168.178.99_2019-06-01_19-12-59_01_M01.jpg
+      ###  Error in reading, resizing or writing: 192.168.178.99_2019-06-01_19-13-29_01_M01.jpg
+      ###  Error in reading, resizing or writing: 192.168.178.99_2019-06-01_19-13-30_01_M01.jpg
+      ###  Error in reading, resizing or writing: 192.168.178.99_2019-06-01_19-13-31_01_M01.jpg
+      ###  Error in reading, resizing or writing: 192.168.178.99_2019-06-01_19-13-32_01_M01.jpg
+      ###  Error in reading, resizing or writing: 192.168.178.99_2019-06-01_19-13-49_01_M01.jpg
+192.168.178.99_2019-06-10_19-18-00_01_M01.jpg
+Conversion finished.
+Video saved in \\nas\VideoIPcam\vid_2019-03-11_12-36-03.avi      with size: 3627.1 MB
+146632 files removed from 146632 in total.
+
+PS D:\Data\Python\DomeCam_GUI>
