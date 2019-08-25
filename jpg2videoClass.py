@@ -3,6 +3,8 @@ import re
 import cv2
 from datetime import datetime  
 from datetime import timedelta  
+import time
+
 
 
 class jpg2video:
@@ -24,10 +26,10 @@ class jpg2video:
         counter = 0
         myFiles = []
         for filename in filelist:
-            node, date, time,_ ,_,=re.split('\_',filename)
-            fdate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
+            node, date, xtime,_ ,_,=re.split('\_',filename)
+            fdate = datetime.strptime(date+xtime, "%Y-%m-%d%H-%M-%S")
             if startdate < fdate < enddate:
-                # print(date, time)
+                # print(date, xtime)
                 myFiles.append(filename)
                 counter += 1
                 if counter > maxFrame:
@@ -37,13 +39,13 @@ class jpg2video:
 
     def getFileNumber(self, fileList, selectDate):
         counter = 0
-        node, date, time,_ ,_,=re.split('\_',fileList[-1])
-        lastDate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
+        _, date, xtime,_ ,_,=re.split('\_',fileList[-1])
+        lastDate = datetime.strptime(date+xtime, "%Y-%m-%d%H-%M-%S")
         if selectDate > lastDate:
             return len(fileList)-1
         for filename in fileList:
-            node, date, time,_ ,_,=re.split('\_',filename)
-            fdate = datetime.strptime(date+time, "%Y-%m-%d%H-%M-%S")
+            _, date, xtime,_ ,_,=re.split('\_',filename)
+            fdate = datetime.strptime(date+xtime, "%Y-%m-%d%H-%M-%S")
             if selectDate > fdate:
                 counter += 1
             else:
@@ -52,8 +54,8 @@ class jpg2video:
 
 
     def getFirstDate(self,filelist):
-        node, date, time,_ ,_,=re.split('\_',filelist[0])
-        return date, time
+        _, date, xtime,_ ,_,=re.split('\_',filelist[0])
+        return date, xtime
 
     def files2video(self, filelist, output=0, codec='mp42'):
         if not filelist:
@@ -71,8 +73,8 @@ class jpg2video:
         # print("height, width, channels",height, width, channels)
         newSize = (int(width*fac), int(height*fac))
         # if not output:
-        node, date, time,_ ,_,=re.split('\_',filelist[0])
-        output = self.outputPath+"vid_"+date+"_"+time+".avi"
+        node, date, xtime,_ ,_,=re.split('\_',filelist[0])
+        output = self.outputPath+"vid_"+date+"_"+xtime+".avi"
         out = cv2.VideoWriter(output, fourcc, fps, newSize)
         print("Converting jpg to video:")
         for filename in filelist:
@@ -100,7 +102,7 @@ class jpg2video:
         print(i, 'files removed from', len(fileList), 'in total.\n')
         return
 
-    def files2video2(self, filelist, output=0, codec='mp42'):
+    def files2video2(self, filelist, output=0, codec='mp42',fac=1.0):
         if not filelist:
             print("Nothing to convert (empty filelist).")
             return
@@ -109,35 +111,42 @@ class jpg2video:
         # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         # fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         fourcc = cv2.VideoWriter_fourcc(*'MP42')
-        fac = 0.75
-        fps = 15.0
+        # fac = 0.75
+        fps = 3
         frame = cv2.imread(self.datapath+filelist[0])
         height, width, channels = frame.shape
         # print("height, width, channels",height, width, channels)
         newSize = (int(width*fac), int(height*fac))
         # if not output:
-        node, date, time,_ ,_,=re.split('\_',filelist[0])
-        output = self.outputLocal+"vid_"+date+"_"+time+".avi"
-        frameList = self.outputLocal+"vid_"+date+"_"+time+".dat"
-        out = cv2.VideoWriter(output, fourcc, fps, newSize)
+        _, date, xtime,_ ,_,=re.split('\_',filelist[0])
+        output = self.outputLocal+"vid_"+date+"_"+xtime+".avi"
+        frameList = self.outputLocal+"vid_"+date+"_"+xtime+".dat"
+        out = cv2.VideoWriter(output, fourcc, int(fps), newSize)
+        print('Estimated time (min): ', len(filelist)*0.156/60.)
         print("Converting jpg to video:")
+        convStart = time.time()
         iFrame =1
-        # open
-        for filename in filelist:
-            try:
-                frame = cv2.imread(self.datapath+filename)
-                resized = cv2.resize(frame, newSize, interpolation = cv2.INTER_AREA)
-                print(filename, end='\r', flush=True)
-                out.write(resized)
-                node, date, time,_ ,_,=re.split('\_',filename)
-                # print(iFrame, date ,' >>>', time,'<<< ')
-                iFrame += 1
-            except:
-                print("\n      ###  Error in reading, resizing or writing:", filename)
+        with open(frameList, 'w') as fl:
+            for filename in filelist:
+                try:
+                    frame = cv2.imread(self.datapath+filename)
+                    if fac < 0.8:
+                        resized = cv2.resize(frame, newSize, interpolation = cv2.INTER_AREA)
+                        print(filename, end='\r', flush=True)
+                        out.write(resized)
+                    else:
+                        out.write(frame)
+                    node, xdate, xtime,_ ,_,=re.split('\_',filename)
+                    print(iFrame, xdate , xtime, file=fl)
+                    iFrame += 1
+                except:
+                    print("\n      ###  Error in reading, resizing or writing:", filename)
         out.release()
         print("\nConversion finished.")
+        convEnd = time.time()
         cv2.destroyAllWindows()
         print('Video saved in',output, '     with size: %3.1f MB' %(os.path.getsize(output)/(1024*1024.0)))
+        print('Time needed (min):', (convEnd-convStart)/60., ';  time/frame (sec): ', (convEnd-convStart)/(iFrame-1))
         return output
 
 
